@@ -4,10 +4,24 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    // Tell cargo to tell rustc to link the system 
-    // shared library.
-    println!("cargo:rustc-link-lib=dylib=h264bitstream");
-    println!("cargo:rustc-link-search=native={}", "/nix/store/x12q0a0ndp71yn0njshpfb350h12iq1x-h264bitstream-master/lib");
+    /* 1. Build git submodule checkout of libh264bitstream */
+    // Build the project in the path `foo` and installs it in `$OUT_DIR`
+    let dst = autotools::Config::new("libh264bitstream")
+        .reconf("-i")
+        .build();
+
+    println!("built in {}", dst.as_path().display());
+    let libh264bitstream_include_dir = dst.as_path().join("include");
+    let libh264bitstream_lib_dir = dst.as_path().join("lib");
+
+    // Simply link the library without using pkg-config
+    println!(
+        "cargo:rustc-link-search=native={}",
+        libh264bitstream_lib_dir.display()
+    );
+    println!("cargo:rustc-link-lib=static=h264bitstream");
+
+    /* 2. Generate Bindings */
 
     // Tell cargo to invalidate the built crate whenever the wrapper changes
     println!("cargo:rerun-if-changed=wrapper.h");
@@ -19,7 +33,7 @@ fn main() {
         // The input header we would like to generate
         // bindings for.
         .header("wrapper.h")
-        .clang_arg("-I/nix/store/x12q0a0ndp71yn0njshpfb350h12iq1x-h264bitstream-master/include")
+        .clang_arg(format!("-I{}", libh264bitstream_include_dir.display()))
         .whitelist_function("h264_new")
         .whitelist_function("h264_free")
         .whitelist_function("find_nal_unit")
@@ -43,4 +57,3 @@ fn main() {
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings!");
 }
-

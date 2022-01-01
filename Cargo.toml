@@ -11,3 +11,4 @@ libc = "0.2"
 [build-dependencies]
 cc = { version = "1.0", features = ["parallel"] }
 bindgen = "0.56.0"
+autotools = "0.2"
