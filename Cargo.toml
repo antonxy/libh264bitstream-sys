@@ -1,0 +1,13 @@
+[package]
+name = "libh264bitstream-sys"
+version = "0.1.0"
+build = "build.rs"
+edition = "2018"
+links = "h264bitstream"
+
+[dependencies]
+libc = "0.2"
+
+[build-dependencies]
+cc = { version = "1.0", features = ["parallel"] }
+bindgen = "0.56.0"
